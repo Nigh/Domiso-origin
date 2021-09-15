@@ -1,79 +1,30 @@
 ﻿
-full_command_line := DllCall("GetCommandLine", "str")
-if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
-{
-	try
-	{
-		if A_IsCompiled
-			Run *RunAs "%A_ScriptFullPath%" /restart
-		else
-			Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%"
-	}
-	ExitApp
-}
-
 if A_IsCompiled
 debug:=0
 Else
 debug:=1
-
-; debugHotkey:=debug
 debugHotkey:=0
 
 #SingleInstance force
-SetBatchLines, -1
 SetWorkingDir %A_ScriptDir%
-SetKeyDelay, 1, 1 
-SendMode event 
 
-#Include data/midi_data.ahk
+#Include lib/midi_data.ahk
 #Include lib/Music.ahk
 #Include menu.ahk
-#include Encrypt.ahk
 
-
-; 谱面模式normal or cipher
-sheet_mode:="normal"
 ; 谱面内容
 sheet_content:=""
 ; 显示内容
 plain_content:=""
 
-
-isBtn1Playing:=0
 isBtn2Playing:=0
 
 _Instrument:=10
-DllCall("QueryPerformanceFrequency", "Int64P", freq)
 
 baseOffset := [0,2,4,5,7,9,11]
 
 Notes := new NotePlayer()
 Notes.Instrument(_Instrument)
-; q w e r t y u
-; a s d f g h j
-; z x c v b n m
-genshin_note_map := { 48:"z"
-, 50:"x"
-, 52:"c"
-, 53:"v"
-, 55:"b"
-, 57:"n"
-, 59:"m"
-, 60:"a"
-, 62:"s"
-, 64:"d"
-, 65:"f"
-, 67:"g"
-, 69:"h"
-, 71:"j"
-, 72:"q"
-, 74:"w"
-, 76:"e"
-, 77:"r"
-, 79:"t"
-, 81:"y"
-, 83:"u" }
 if debug
 {
 	MsgBox, 0x41030,ATTENTION,You are running DEBUG version of the program!!!
@@ -91,53 +42,9 @@ Return
 
 #Include menu_label.ahk
 
-genshin_array_sort(ByRef array)
-{
-	array_string:=""
-	For index, v in array
-	{
-		array_string .= v.delay "," v.note "`n"
-	}
-	Sort, array_string, N
-	array:={}
-	Loop, Parse, array_string, `n
-	{
-		if(RegExMatch(A_LoopField, "O)(\d+),(\w)", note))
-		{
-			array.Push({"delay":note[1], "note":note[2]})
-		}
-	}
-}
-
-genshin_main:
-genshin_win_hwnd:=genshin_window_exist()
-if((genshin_play_p > genshin_play_array.Length()) or (!genshin_win_hwnd))
-{
-	isBtn1Playing:=0
-	btn1update()
-	SetTimer, genshin_main, Off
-	Return
-}
-DllCall("QueryPerformanceCounter", "Int64P",  nowTime)
-; genshin_window_active(genshin_window_exist())
-While(nowTime//(freq/1000)-startTime >= genshin_play_array[genshin_play_p].delay)
-{
-	if not genshin_play_array[genshin_play_p].note
-	{
-		Return
-	}
-	if WinActive("ahk_id " genshin_win_hwnd)
-	{
-		Send, % genshin_play_array[genshin_play_p].note
-	}
-	; ControlSend, ,% genshin_play_array[genshin_play_p].note, ahk_exe GenshinImpact.exe
-	genshin_play_p += 1
-}
-Return
-
 ; 管理员权限下，无法直接使用拖入文件的功能，改由文件选择器调用此方法
 GuiDropFiles(GuiHwnd, FileArray, CtrlHwnd, X, Y) {
-	global hEdit1, editer, sheet_mode, plain_content, sheet_content
+	global hEdit1, editer, plain_content, sheet_content
 	if FileArray.MaxIndex() > 1
 	{
 		MsgBox, 0x41010, ERROR, More than 1 file detected.
@@ -152,87 +59,14 @@ GuiDropFiles(GuiHwnd, FileArray, CtrlHwnd, X, Y) {
 			Return
 		}
 		f:=FileOpen(FileArray[1], "r")
-		if(is_dms_file(f))
-		{
-			sheet_mode:="cipher"
-			GuiControl, +ReadOnly +Disabled, editer
-			f.Seek(0)
-			_temp:=Decrypt_file(f)
-			plain_content:=_temp[1]
-			sheet_content:=_temp[2]
-		}
-		Else
-		{
-			sheet_mode:="normal"
-			GuiControl, -ReadOnly -Disabled, editer
-			f.Seek(0)
-			plain_content:=f.Read()
-			sheet_content:=plain_content
-		}
+		GuiControl, -ReadOnly -Disabled, editer
+		f.Seek(0)
+		plain_content:=f.Read()
+		sheet_content:=plain_content
 		f.Close()
 		ControlSetText,, % plain_content, ahk_id %hEdit1%
 	}
 }
-
-genshin_play()
-{
-	global startTime, freq, genshin_play_p, isBtn1Playing
-	genshin_play_p := 1
-	DllCall("QueryPerformanceCounter", "Int64P",  nowTime)
-	genshin_hwnd := genshin_window_active(genshin_window_exist())
-	WinWaitActive, ahk_id %genshin_hwnd%,, 0
-	if(ErrorLevel==1)
-	{
-		MsgBox, 0x41010,,Genshin is not running!!!
-		Return
-	}
-	isBtn1Playing:=1
-	btn1update()
-	startTime:=nowTime//(freq/1000) + 500
-	SetTimer, genshin_main, 5 
-}
-
-genshin_stop()
-{
-	global
-	isBtn1Playing:=0
-	btn1update()
-	SetTimer, genshin_main, Off
-}
-
-genshin_window_exist()
-{
-	genshinHwnd := WinExist("ahk_exe GenshinImpact.exe")
-	if not genshinHwnd
-	{
-		genshinHwnd := WinExist("ahk_exe YuanShen.exe")
-	}
-	return genshinHwnd
-}
-
-genshin_window_active(hwnd)
-{
-	WinActivate, ahk_id %hwnd%
-	Return hwnd
-}
-
-
-func_btn_play:
-if(!isBtn1Playing)
-{
-	
-	if(sheet_mode=="normal")
-	{
-		Gui, Submit, NoHide
-		sheet_content:=editer
-	}
-	; TODO
-	Gosub resolution
-	genshin_array_sort(genshin_play_array)
-	Gosub, func_btn_try_stop
-	genshin_play()
-}
-Return
 
 func_btn_try_stop:
 	Notes.Reset()
@@ -243,11 +77,8 @@ Return
 func_btn_try:
 if(!isBtn2Playing)
 {
-	if(sheet_mode=="normal")
-	{
-		Gui, Submit, NoHide
-		sheet_content:=editer
-	}
+	Gui, Submit, NoHide
+	sheet_content:=editer
 	Gosub resolution
 	; Clipboard:=output
 	Notes.Start()
@@ -262,28 +93,12 @@ Return
 
 func_btn_file:
 Thread, NoTimers
-FileSelectFile, select_file, 1, , Title, DoMiSo Sheet (*.txt; *.dms)
+FileSelectFile, select_file, 1, , Title, DoMiSo Sheet (*.txt)
 Thread, NoTimers, false
 if select_file
 {
 	GuiDropFiles(0, [select_file], hEdit1, 0, 0)
 }
-Return
-
-func_btn_publish:
-if(sheet_mode!="normal")
-{
-	Return
-}
-Gui, Submit, NoHide
-pub_txt:=editer
-If Encrypt_dms_valid(pub_txt)!=1
-{
-	MsgBox, 0x41010, Wrong, No Publish Mark detected.
-	Return
-}
-pub_filename:=Encrypt_dms_enc(pub_txt)
-MsgBox, 0x1040, Success, % "Published as 【" pub_filename "】"
 Return
 
 func_btn_exit:
@@ -296,17 +111,6 @@ Return
 
 resolution:
 parse_content:=sheet_content
-if(sheet_mode="normal")
-{
-	If Encrypt_dms_valid(sheet_content)=1
-	{
-		parse_content:=dms_parser(sheet_content)[2]
-	}
-}
-
-genshin_play_array:={}
-genshin_output:=""
-genshin_delay:=0
 
 output:=""
 Notes.Reset()
@@ -337,13 +141,11 @@ Loop, Parse, parse_content, `n,`r%A_Space%%A_Tab%	;逐行解析
 		{
 			Notes.Delay(-r1*beatTime)
 			output.="Notes.Delay(" -r1*beatTime ")`n"
-			genshin_delay -= r1*beatTime
 		}
 		Else
 		{
 			Notes.Offset:=0
 			output.="Notes.Offset:=0`n"
-			genshin_delay := 0
 		}
 	}
 	
@@ -421,24 +223,18 @@ Loop, Parse, parse_content, `n,`r%A_Space%%A_Tab%	;逐行解析
 				{
 					Notes.Note(noteTune,noteTime,50).Delay(noteTime)
 					output.="Notes.Note(" noteTune "," noteTime ",50).Delay(" noteTime ")`n"
-					genshin_output.="[" genshin_delay "]-(" genshin_note_map[noteTune] ")`n"
-					genshin_play_array.Push({"delay":genshin_delay,"note":genshin_note_map[noteTune]})
-					genshin_delay += noteTime
 				}
 				Else If(noteTune>0)
 				{
 					Notes.Note(noteTune,noteTime,50)
 					chordTime:=noteTime>chordTime ? noteTime : chordTime
 					output.="Notes.Note(" noteTune "," noteTime ",50)`n"
-					genshin_output.="[" genshin_delay "]-(" genshin_note_map[noteTune] ")`n"
-					genshin_play_array.Push({"delay":genshin_delay,"note":genshin_note_map[noteTune]})
 				}
 			}
 			Else
 			{
 				Notes.Delay(noteTime)
 				output.="Notes.Delay(" noteTime ")`n"
-				genshin_delay += noteTime
 			}
 		}
 		If(RegExMatch(A_LoopField,"iS)(\(|\))",mark))	;解析括号
@@ -453,11 +249,18 @@ Loop, Parse, parse_content, `n,`r%A_Space%%A_Tab%	;逐行解析
 				Notes.Delay(chordTime)
 				chord:=0
 				output.="Notes.Delay(" chordTime ")`n"
-				genshin_delay += chordTime
 			}
 		}
 	}
 }
+Return
+
+Author:
+run, https://github.com/Nigh
+Return
+
+donate:
+Run, https://ko-fi.com/xianii
 Return
 
 GuiClose:
@@ -467,5 +270,3 @@ ExitApp
 F5::ExitApp
 F6::Reload
 #If
-F8::genshin_stop()
-F9::Gosub, func_btn_play

@@ -1,184 +1,169 @@
-DoMiSo 简谱解释器 说明文档
+DoMiSo Documentation
 ==================
 
-## [English](README_en.md)
-## [简体中文](README.md)
+### [English](README.md)
+### [简体中文](README_zh.md)
 
-- github托管：https://github.com/Nigh/DoMiSo
-- gitee托管：https://gitee.com/xianii/domiso
+> This document has been mostly translated by `deepl.com/translator` and has been lightly proofread by hand.
 
-特别版规约
-------------------
-任何使用本版本软件（原神特别版）创作的衍生作品均需要在作品中注明。
-并在文字描述部分恰当的注明软件来源。
-
-任何由于使用本软件对第三方所造成的侵害均由使用者本人负责。
-
-## 界面
+## Screenshot
 
 ![](assets/screenshot.png)
 
-使用说明
+Instructions for use
 ------------------
-- 在输入框中粘贴有效的简谱或使用`File`按钮选择`txt`或`dms`谱
-- 点击`Try`可以使用midi试听谱面
-- 在`原神`游戏已经启动，并且在演奏界面时，点击`Play`可以自动在游戏中演奏谱面
-- 按下`F8`快捷键可以停止游戏中的自动演奏
-- 按下`F9`快捷键可以开始游戏中的自动演奏
-- 当谱面中存在由一排等于号`=`如`========`构成的分割线时，分割线以上部分视为注释部分，不会演奏
-- 当谱面中存在注释部分时，使用`Publish`按钮可以发布加密谱。加密谱面只会显示注释部分，不会显示演奏谱面
-
-由于`原神`游戏以管理员权限启动，所以本软件需要管理员权限才能与游戏本体交互。
+- Paste a valid score in the input box
+- Click on `Play` to listen to the score in midi
 
 
-当前版本
+Current Version
 ------------------
-v0.4 Genshin - 原神特别版
+v0.9 Origin
 
-ahk版本-`1.1.33.7 Unicode 32bit`
+ahk version-`1.1.33.7 Unicode 32bit`
 
-更新日志
+Update Log
 ------------------
 
-- 2021.5.17 v0.4 Genshin
+- 2021.09.15 v0.9 Origin
 
-  添加谱面加密发布功能
-  添加自动请求管理员权限功能
+  Separate the original version from the `Genshin` special edition and recreate the `repo` completely separate from the `Genshin` version
 
 - 2021.4.6 v0.32A Genshin
 
-  修复括号和弦的时值会错误的受到上一个括号和弦时值的影响的问题
+  Fixes an issue where the time value of a bracketed chord was incorrectly affected by the time value of the previous bracketed chord
 
 - 2021.4.1 v0.31A Genshin
 
-  修复快捷键功能异常的问题
+  Fixing an abnormal shortcut key function
 
 - 2021.3.29 v0.3A Genshin
 
-  添加F9为开始快捷键
-  更改标题颜色，以便与手搓版区分
+  Add F9 as a start shortcut  
+  Change the colour of the title to distinguish it from the manual version
 
 - 2021.3.29 v0.2a Genshin
 
-  重写了UI，更改了GDIP的实现方式  
-  原神特别版，附带自动演奏功能
+  Rewrote the UI and changed the GDIP implementation  
+  Genshin Impact Special Edition with Auto-Play function
 
 - 2013.7.6 v0.1a Alpha 
 
-  添加一个停止按钮  
-  添加点击托盘图标激活主窗体功能  
-  添加一个窗口置顶按钮  
-  略微更改了标题栏的交互
+  Add a stop button  
+  Add the ability to click on the tray icon to activate the main form  
+  Added a window top button  
+  Slightly changed the interaction of the title bar
 
 - 2013.6.29 v0.1 Alpha
 
-  第一个demo发布
+  First demo publish
 
-简介
+Introduction
 ------------------
-DoMiSo 是一个轻量级的简谱解释器，它能够将格式化的简谱转换成midi音乐并播放出来。
-在本说明文档的同目录下将会有几个示例简谱。用户可以将它们拷贝到DoMiSo中播放出来。
+DoMiSo is a lightweight numbered musical notation interpreter that can convert formatted numbered musical notation into midi music and play it back.
+There are several example scores in the same directory as this document. You can copy them to DoMiSo and play them back.
 
-语法
+
+
+The `Carrying you.txt` in the `example_sheets` directory is a sample numbered musical notation with comments.
+
+Grammar
 ------------------
-DoMiSo的简谱格式包含控制命令与音符标记。
-其中控制命令包括调性控制，速度控制和回滚控制。
+DoMiSo's numbered musical notation format includes `control commands` and `note markers`.
+The control commands include `key control`, `tempo control` and `rollback control`.
 
-### 控制命令 ###
+### Control commands ###
 
-#### !!!注意!!!
-简谱解释器原神特别版由于游戏本身限制，音域受限。  
-~~所以在此特别版中，调性命令将自动失效，固定调性为`1=C`~~
-
-由于游戏本身限制，无法演奏半音，所以在此特别版中，无法演奏的音将会在~~试听和播放~~演奏时自动忽略。
-
-##### 调性控制命令格式如下：
+##### key control：
 
 `1=F#`
 
-当不加音阶序号时，默认是第5个音阶。即上面的命令等价于：
+When no scale number is added, the default is the 5th scale. I.e. the above command is equivalent to
 
 `1=F5#`
 
-没有规定调性时，默认`1=C`
+Default `1=C` when no tonality is specified
 
-##### 速度控制命令格式如下：
+##### tempo control：
 
 `bpm=120`
 
-有效的bpm范围为1~480，超出此范围的数值视为无效，将会把bpm重置为初始值80。
+Valid bpm ranges from `1` to `480`, values outside this range are considered invalid and will reset bpm to the initial value of `80`.
 
-没有规定速度时，默认`bpm=80`
+When no tempo is specified, the default is `bpm=80`.
 
-##### 回滚控制命令格式如下：
+##### rollback control：
 
 `rollback=12.5`
 
-回滚命令的作用是将音符的书写位置前移N个当前速度下的全音符长度。N可以为小数。
+The function of the Rollback command is to move the writing position of a note forward by `N` full note lengths at the current tempo. `N` can be a decimal number.
 
-当存在多个声部时，可利用此命令来将多个声部分开书写。其用法将在后面介绍。
+When there are multiple parts, this command can be used to write multiple parts separately. Its use will be described later.
 
-所有控制命令不分大小写，而且可以与音符放在同一行。且不论命令在行中的什么位置，都将先执行命令，再解析音符。
+All control commands are case-insensitive and can be placed on the same line as the note. The command will be executed before the note is parsed, regardless of its position on the line.
 
-### 音符标记 ###
+### note marker ###
 
-##### 音符示例： #####
+##### Examples： #####
 
 `++3b//` `-1#-/-` `5..` `( 1 3 5 )`
 
-每个音符之间由空格隔开，不符合格式的音符将会被直接忽略。
+Each note is separated by a space and notes that do not meet the format are simply ignored.
 
-##### 音高相关： #####
+##### Pitch： #####
 
-音符标记从`0~7`，意义与普通简谱一致。
+The notes are marked from `0 to 7`, with the same meaning as in numbered musical notation.
 
-音符前面的`+`和`-`，表示将音符升高或降低N个音阶。N即为+或-的数量。
+The notes preceded by `+` and `-` indicate that the note is raised or lowered by N steps, N being the number of `+` or `-`.
 
-音符后面的`#`和`b`，表示将音符升高或降低半个全音。
+The `#` and `b` after the note indicate that the note is raised or lowered by half tone.
 
-##### 长度相关： #####
+##### Length： #####
 
-与长度有关的标记有`/` `-` `.`
+The length-related markers are `/` `-` `. `
 
-`/` 表示将前面标记的音长减少一半。意义与普通简谱中的下划线一致。
+`/` means that the length of the preceding mark is reduced by half. The meaning is the same as the underscore in numbered musical notation.
 
-`-` 表示一个全音符的长度。意义与普通简谱中一致。且可以与 / 组合使用。
+`-` indicates the length of a whole note. The meaning is the same as in numbered musical notation. Can be used in combination with `/`.
 
-`.` 表示将前面音符的长度延长一半。
+`.` extends the length of the preceding note by half.
 
-比如 `5..` 的音符长度即为 1+0.5+0.25 拍。
+For example, `5..` has a note length of `1+0.5+0.25` beats.
 
-`++3b//` 的音符长度即为 0.25 拍。
+`++3b//` has a note length of `0.25` beats.
 
-`-1#-/-` 的音符长度即为 1+0.5+1 拍。
+`-1#-/-` has a note length of `1+0.5+1` beats.
 
-`( 1 3- 5 )` 的音符长度为 2 拍。这是一个和弦。和弦的用法将在下面详述。
+`( 1 3- 5 )` has a note length of `2` beats. This is a chord. The use of the chord is described below.
 
-##### 和弦： #####
-用括号括起来的音符将被视作和弦。其中，括号与音符之间需要用空格隔开。否则会被当作无效音符而忽略。
+##### Chord： #####
+Notes enclosed in brackets will be treated as chords. In this case, the brackets need to be separated from the notes by a space. Otherwise they will be ignored as invalid notes.
 
-和弦中的每个音符将在同时被演奏，整个和弦的长度由和弦中最长的音符决定。
+Each note in the chord will be played at the same time and the length of the whole chord is determined by the longest note in the chord.
 
-RollBack示例
+RollBack Example
 ------------------
-这是一个RollBack用法示例，用以演示RollBack命令的基本用法。
+This is a RollBack usage example to demonstrate the basic usage of the RollBack command.
 
-这是使用和弦的写法：
+This is written using the chord:
 
     ( 1 -1 ) ( 2 -2 ) ( 3 -3 ) ( 4 -4 ) ( 5 -5 ) ( 6 -6 ) ( 7 -7 )
 
-这是使用rollback的写法：
+This is written using rollback command：
 
-    1 2 3 4 5 6 7 ;高音声部
-    rollback=7 ;回滚7拍
-    -1 -2 -3 -4 -5 -6 -7 ;低音声部
+    1 2 3 4 5 6 7
+    rollback=7
+    -1 -2 -3 -4 -5 -6 -7
 
-rollback命令动画演示：
+The effect is the same for both ways of writing. More usage can be found in the sample sketches in the `example_sheets` directory.
+
+
+Rollback command animation demonstration：
 
 ![](assets/rollback.gif)
 
-这两种写法的效果是一样的。更多用法可以参见`example_sheets`目录下的示例简谱。
 
-捐助
+Donate
 ------------------
-![](assets/alipay.jpg)
+- Ko-fi: https://ko-fi.com/xianii
+- Paypal: https://paypal.me/xianii
